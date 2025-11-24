@@ -1,75 +1,148 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Website Security Checker Project</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            max-width: 800px;
-            margin: auto;
-        }
-        h1 {
-            color: #333;
-        }
-        .code-box {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 6px;
-            white-space: pre-wrap;
-            font-family: Consolas, monospace;
-        }
-        a.button {
-            display: inline-block;
-            padding: 10px 15px;
-            background: #0078ff;
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            margin-top: 10px;
-        }
-        a.button:hover {
-            background: #005fcc;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Website Security Checker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
+    h1 {
+      color: #333;
+    }
+    label, input, button {
+      font-size: 16px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin: 8px 0 12px;
+      box-sizing: border-box;
+    }
+    button {
+      padding: 8px 16px;
+      background: #0078ff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background: #888;
+      cursor: default;
+    }
+    #status {
+      margin-top: 16px;
+      font-weight: bold;
+    }
+    pre {
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 4px;
+      white-space: pre-wrap;
+    }
+    .ok { color: green; }
+    .bad { color: #c00; }
+  </style>
 </head>
 <body>
 
 <h1>Project 4 – Website Security Checker</h1>
-
 <p>
-This project is a simple <b>Python-based tool</b> that checks a website for basic security features,
-including HTTPS usage, redirects, important security headers, and cookie flags.
+  Enter a website URL and this tool will check some basic security properties
+  (HTTPS, redirects, headers, cookies). The actual scanning logic runs in a
+  Python backend; this page just calls the API and shows the results.
 </p>
 
-<h2>Features</h2>
-<ul>
-    <li>Detects if the website uses HTTPS</li>
-    <li>Checks HTTP → HTTPS redirect</li>
-    <li>Scans for important security headers</li>
-    <li>Checks cookies for Secure + HttpOnly flags</li>
-    <li>Fully safe and does not attack websites</li>
-</ul>
+<form id="scan-form">
+  <label for="url-input">Website URL:</label>
+  <input id="url-input" type="text" placeholder="https://example.com" required>
+  <button type="submit" id="scan-btn">Scan</button>
+</form>
 
-<h2>How to run the script</h2>
-<div class="code-box">
-pip install requests
+<div id="status"></div>
+<div id="results"></div>
 
-python security_checker.py
-</div>
+<script>
+  const BACKEND_URL = "YOUR_RENDER_URL_HERE/scan";  // <- change this
 
-<p>Then enter any URL, like:</p>
+  const form = document.getElementById("scan-form");
+  const urlInput = document.getElementById("url-input");
+  const statusEl = document.getElementById("status");
+  const resultsEl = document.getElementById("results");
+  const btn = document.getElementById("scan-btn");
 
-<div class="code-box">
-https://example.com
-</div>
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const url = urlInput.value.trim();
+    if (!url) return;
 
-<h2>Download the script</h2>
-<a class="button" href="security_checker.py" download>Download Python Script</a>
+    statusEl.textContent = "Scanning...";
+    statusEl.className = "";
+    resultsEl.innerHTML = "";
+    btn.disabled = true;
 
-<h2>Screenshots</h2>
-<p>You can add them here later by dragging PNG files into the repo.</p>
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        statusEl.textContent = "Error: " + (data.error || "Unknown error");
+        statusEl.className = "bad";
+        btn.disabled = false;
+        return;
+      }
+
+      let text = "";
+      text += "Scanned URL: " + data.url + "\\n";
+      text += "Status code: " + data.status_code + "\\n\\n";
+
+      text += "HTTPS enabled: " + (data.https ? "YES" : "NO") + "\\n";
+      text += "HTTP -> HTTPS redirect: ";
+      if (data.redirects_to_https === null) {
+        text += "Unknown (could not check)\\n";
+      } else {
+        text += (data.redirects_to_https ? "YES" : "NO") + "\\n";
+      }
+
+      text += "\\nMissing security headers:\\n";
+      if (data.missing_headers && data.missing_headers.length) {
+        data.missing_headers.forEach(h => {
+          text += " - " + h + "\\n";
+        });
+      } else {
+        text += " - None (all present from our list)\\n";
+      }
+
+      text += "\\nCookie issues:\\n";
+      if (data.cookie_issues && data.cookie_issues.length) {
+        data.cookie_issues.forEach(c => {
+          text += " - " + c + "\\n";
+        });
+      } else {
+        text += " - None detected\\n";
+      }
+
+      statusEl.textContent = "Scan completed.";
+      statusEl.className = "ok";
+      resultsEl.innerHTML = "<pre>" + text + "</pre>";
+
+    } catch (err) {
+      statusEl.textContent = "Request failed: " + err;
+      statusEl.className = "bad";
+    } finally {
+      btn.disabled = false;
+    }
+  });
+</script>
 
 </body>
 </html>
