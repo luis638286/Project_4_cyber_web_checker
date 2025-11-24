@@ -67,7 +67,7 @@
 <div id="results"></div>
 
 <script>
-  const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";  // <- change this
+  const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";
 
   const form = document.getElementById("scan-form");
   const urlInput = document.getElementById("url-input");
@@ -92,7 +92,14 @@
         body: JSON.stringify({ url })
       });
 
-      const data = await res.json();
+      const text = await res.text();   // get raw text first
+      let data;
+
+      try {
+        data = JSON.parse(text);       // try parse JSON
+      } catch (e) {
+        throw new Error("Backend did not return JSON. Raw response: " + text.slice(0, 200));
+      }
 
       if (!res.ok || data.error) {
         statusEl.textContent = "Error: " + (data.error || "Unknown error");
@@ -101,48 +108,50 @@
         return;
       }
 
-      let text = "";
-      text += "Scanned URL: " + data.url + "\\n";
-      text += "Status code: " + data.status_code + "\\n\\n";
+      let out = "";
+      out += "Scanned URL: " + data.url + "\n";
+      out += "Status code: " + data.status_code + "\n\n";
 
-      text += "HTTPS enabled: " + (data.https ? "YES" : "NO") + "\\n";
-      text += "HTTP -> HTTPS redirect: ";
+      out += "HTTPS enabled: " + (data.https ? "YES" : "NO") + "\n";
+
+      out += "HTTP -> HTTPS redirect: ";
       if (data.redirects_to_https === null) {
-        text += "Unknown (could not check)\\n";
+        out += "Unknown (could not check)\n";
       } else {
-        text += (data.redirects_to_https ? "YES" : "NO") + "\\n";
+        out += (data.redirects_to_https ? "YES" : "NO") + "\n";
       }
 
-      text += "\\nMissing security headers:\\n";
+      out += "\nMissing security headers:\n";
       if (data.missing_headers && data.missing_headers.length) {
         data.missing_headers.forEach(h => {
-          text += " - " + h + "\\n";
+          out += " - " + h + "\n";
         });
       } else {
-        text += " - None (all present from our list)\\n";
+        out += " - None (all present from our list)\n";
       }
 
-      text += "\\nCookie issues:\\n";
+      out += "\nCookie issues:\n";
       if (data.cookie_issues && data.cookie_issues.length) {
         data.cookie_issues.forEach(c => {
-          text += " - " + c + "\\n";
+          out += " - " + c + "\n";
         });
       } else {
-        text += " - None detected\\n";
+        out += " - None detected\n";
       }
 
       statusEl.textContent = "Scan completed.";
       statusEl.className = "ok";
-      resultsEl.innerHTML = "<pre>" + text + "</pre>";
+      resultsEl.innerHTML = "<pre>" + out + "</pre>";
 
     } catch (err) {
-      statusEl.textContent = "Request failed: " + err;
+      statusEl.textContent = "Request failed: " + err.message;
       statusEl.className = "bad";
     } finally {
       btn.disabled = false;
     }
   });
 </script>
+
 
 </body>
 </html>
