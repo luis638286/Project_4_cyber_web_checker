@@ -4,69 +4,330 @@
   <meta charset="UTF-8">
   <title>Website Security Checker</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 800px;
-      margin: 40px auto;
-      padding: 0 16px;
+    :root {
+      --bg: #f5f4fa;
+      --card-bg: #ffffff;
+      --accent: #7c3aed;        /* purple */
+      --accent-soft: #ede9fe;
+      --danger: #b91c1c;
+      --danger-soft: #fee2e2;
+      --ok: #15803d;
+      --text-main: #222222;
+      --text-muted: #5f5f6b;
+      --border-soft: #e2e2f0;
     }
-    h1 {
-      color: #333;
-    }
-    label, input, button {
-      font-size: 16px;
-    }
-    input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      margin: 8px 0 12px;
+
+    * {
       box-sizing: border-box;
     }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, var(--bg) 40%, #f8fafc 100%);
+      color: var(--text-main);
+    }
+
+    .page {
+      max-width: 950px;
+      margin: 40px auto 56px;
+      padding: 0 20px;
+    }
+
+    h1 {
+      font-size: 2.4rem;
+      margin: 0 0 8px;
+      letter-spacing: 0.03em;
+    }
+
+    .tagline {
+      margin-bottom: 24px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .shell-card {
+      background: var(--card-bg);
+      border-radius: 18px;
+      padding: 24px 22px 26px;
+      box-shadow:
+        0 12px 30px rgba(15, 23, 42, 0.08),
+        0 1px 0 rgba(255, 255, 255, 0.8) inset;
+      border: 1px solid rgba(148, 163, 184, 0.35);
+    }
+
+    label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    input[type="text"] {
+      flex: 1 1 260px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border-soft);
+      font-size: 0.98rem;
+      outline: none;
+      background: #f9fafb;
+      transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.18);
+      background: #ffffff;
+    }
+
     button {
-      padding: 8px 16px;
-      background: #0078ff;
-      color: white;
       border: none;
-      border-radius: 4px;
+      border-radius: 999px;
+      padding: 10px 22px;
+      font-size: 0.98rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      box-shadow: 0 10px 20px rgba(124, 58, 237, 0.35);
+      white-space: nowrap;
+    }
+
+    button:hover {
+      background: #6d28d9;
+      transform: translateY(-1px);
+      box-shadow: 0 14px 26px rgba(124, 58, 237, 0.45);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.35);
+    }
+
+    button:disabled {
+      background: #a5a5b8;
+      box-shadow: none;
+      cursor: default;
+      transform: none;
+    }
+
+    .status {
+      margin-top: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .status.ok {
+      color: var(--ok);
+    }
+
+    .status.bad {
+      color: var(--danger);
+    }
+
+    .status.loading {
+      color: var(--accent);
+    }
+
+    .results-grid {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #fdfdff;
+      border-radius: 16px;
+      padding: 16px 16px 18px;
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      border-radius: 999px;
+      padding: 3px 9px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .badge.ok {
+      background: #dcfce7;
+      color: var(--ok);
+    }
+
+    .badge.bad {
+      background: var(--danger-soft);
+      color: var(--danger);
+    }
+
+    .badge.neutral {
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .issue-list {
+      list-style: none;
+      padding: 0;
+      margin: 6px 0 0;
+    }
+
+    .issue-item {
+      border-radius: 10px;
+      padding: 8px 9px;
+      margin-bottom: 6px;
+      font-size: 0.92rem;
+      background: #f9fafb;
+      border: 1px solid transparent;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      cursor: default;
+      transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.12s ease, border-color 0.15s ease;
+    }
+
+    .issue-item.clickable {
       cursor: pointer;
     }
-    button:disabled {
-      background: #888;
-      cursor: default;
+
+    .issue-item.bad {
+      border-color: rgba(185, 28, 28, 0.35);
+      background: #fef2f2;
     }
-    #status {
-      margin-top: 16px;
-      font-weight: bold;
+
+    .issue-item.ok {
+      border-color: rgba(22, 163, 74, 0.25);
+      background: #ecfdf3;
     }
-    pre {
-      background: #f5f5f5;
-      padding: 12px;
-      border-radius: 4px;
-      white-space: pre-wrap;
+
+    .issue-item.clickable:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 12px rgba(15, 23, 42, 0.08);
     }
-    .ok { color: green; }
-    .bad { color: #c00; }
+
+    .issue-main {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .issue-label {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .issue-icon {
+      font-size: 1rem;
+    }
+
+    .issue-toggle {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .issue-details {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(-3px);
+      transition: max-height 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .issue-item.open .issue-details {
+      max-height: 200px;
+      opacity: 1;
+      transform: translateY(0);
+      margin-top: 4px;
+    }
+
+    .issue-item.open .issue-toggle {
+      color: var(--accent);
+    }
+
+    .footer-note {
+      margin-top: 18px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.85rem;
+      }
+      .shell-card {
+        padding: 18px 14px 20px;
+      }
+    }
   </style>
 </head>
 <body>
+<div class="page">
+  <h1>Project 4 – Website Security Checker</h1>
+  <p class="tagline">
+    Enter a website URL and this tool will run a lightweight vulnerability screen on its configuration:
+    HTTPS usage, redirects, security headers, and cookie flags. The Python scanner runs on a backend server;
+    this page just calls the API and visualises the findings.
+  </p>
 
-<h1>Project 4 – Website Security Checker</h1>
-<p>
-  Enter a website URL and this tool will check some basic security properties
-  (HTTPS, redirects, headers, cookies). The actual scanning logic runs in a
-  Python backend; this page just calls the API and shows the results.
-</p>
+  <div class="shell-card">
+    <form id="scan-form">
+      <label for="url-input">Website URL</label>
+      <div class="input-row">
+        <input id="url-input" type="text" placeholder="https://example.com" required>
+        <button type="submit" id="scan-btn">
+          <span>Scan</span>
+        </button>
+      </div>
+    </form>
 
-<form id="scan-form">
-  <label for="url-input">Website URL:</label>
-  <input id="url-input" type="text" placeholder="https://example.com" required>
-  <button type="submit" id="scan-btn">Scan</button>
-</form>
+    <div id="status" class="status"></div>
 
-<div id="status"></div>
-<div id="results"></div>
+    <div id="results" class="results-grid" style="display:none;"></div>
+
+    <div class="footer-note">
+      Tip: click any marked issue to see a short explanation of what it means and why it matters.
+    </div>
+  </div>
+</div>
 
 <script>
+  // 🔧 Set your backend URL here
   const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";
 
   const form = document.getElementById("scan-form");
@@ -75,13 +336,55 @@
   const resultsEl = document.getElementById("results");
   const btn = document.getElementById("scan-btn");
 
+  // Explanations for each type of issue
+  const headerDescriptions = {
+    "Content-Security-Policy":
+      "CSP controls which scripts, images and other resources the browser is allowed to load. " +
+      "Without it, the site is more vulnerable to Cross-Site Scripting (XSS) and malicious script injections.",
+    "Strict-Transport-Security":
+      "HSTS tells browsers to always use HTTPS for this site. Missing HSTS allows downgrade attacks " +
+      "where users might be forced onto an insecure HTTP version.",
+    "X-Content-Type-Options":
+      "Prevents the browser from guessing file types. Without it, some files could be interpreted as " +
+      "executable script, opening the door to MIME-type confusion attacks.",
+    "X-Frame-Options":
+      "Controls whether the site can be loaded inside an iframe. Without it, attackers can perform " +
+      "clickjacking by overlaying invisible frames on top of trusted UI.",
+    "Referrer-Policy":
+      "Limits what information is sent in the Referer header. Missing this header can leak sensitive URLs " +
+      "and parameters to other sites when users follow links.",
+    "Permissions-Policy":
+      "Restricts powerful browser features like camera, microphone and geolocation. Without it, these " +
+      "features are less controlled and more risky if other bugs exist."
+  };
+
+  const genericHeaderDescription =
+    "This header is commonly recommended to reduce the site's attack surface. " +
+    "Not having it configured means one less defence-in-depth layer.";
+
+  const otherDescriptions = {
+    "https_disabled":
+      "The site is served over plain HTTP. Traffic can be intercepted or modified by attackers on the " +
+      "network. All modern websites should use HTTPS.",
+    "no_https_redirect":
+      "HTTP traffic is not forced to HTTPS. If a user types or follows an http:// link, the connection " +
+      "can be intercepted before it ever reaches HTTPS.",
+    "Missing HttpOnly":
+      "Cookies without the HttpOnly flag can be read by JavaScript. If an attacker manages an XSS attack, " +
+      "they could steal these cookies (for example, session IDs).",
+    "Missing Secure flag":
+      "Cookies without the Secure flag may be sent over HTTP, not just HTTPS, making them easier to " +
+      "intercept on unencrypted connections."
+  };
+
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const url = urlInput.value.trim();
     if (!url) return;
 
     statusEl.textContent = "Scanning...";
-    statusEl.className = "";
+    statusEl.className = "status loading";
+    resultsEl.style.display = "none";
     resultsEl.innerHTML = "";
     btn.disabled = true;
 
@@ -92,66 +395,195 @@
         body: JSON.stringify({ url })
       });
 
-      const text = await res.text();   // get raw text first
+      const text = await res.text();
       let data;
-
       try {
-        data = JSON.parse(text);       // try parse JSON
-      } catch (e) {
+        data = JSON.parse(text);
+      } catch (err) {
         throw new Error("Backend did not return JSON. Raw response: " + text.slice(0, 200));
       }
 
       if (!res.ok || data.error) {
         statusEl.textContent = "Error: " + (data.error || "Unknown error");
-        statusEl.className = "bad";
+        statusEl.className = "status bad";
         btn.disabled = false;
         return;
       }
 
-      let out = "";
-      out += "Scanned URL: " + data.url + "\n";
-      out += "Status code: " + data.status_code + "\n\n";
-
-      out += "HTTPS enabled: " + (data.https ? "YES" : "NO") + "\n";
-
-      out += "HTTP -> HTTPS redirect: ";
-      if (data.redirects_to_https === null) {
-        out += "Unknown (could not check)\n";
-      } else {
-        out += (data.redirects_to_https ? "YES" : "NO") + "\n";
-      }
-
-      out += "\nMissing security headers:\n";
-      if (data.missing_headers && data.missing_headers.length) {
-        data.missing_headers.forEach(h => {
-          out += " - " + h + "\n";
-        });
-      } else {
-        out += " - None (all present from our list)\n";
-      }
-
-      out += "\nCookie issues:\n";
-      if (data.cookie_issues && data.cookie_issues.length) {
-        data.cookie_issues.forEach(c => {
-          out += " - " + c + "\n";
-        });
-      } else {
-        out += " - None detected\n";
-      }
+      renderResults(data);
 
       statusEl.textContent = "Scan completed.";
-      statusEl.className = "ok";
-      resultsEl.innerHTML = "<pre>" + out + "</pre>";
+      statusEl.className = "status ok";
 
     } catch (err) {
       statusEl.textContent = "Request failed: " + err.message;
-      statusEl.className = "bad";
+      statusEl.className = "status bad";
     } finally {
       btn.disabled = false;
     }
   });
+
+  function renderResults(data) {
+    const issuesHeaders = data.missing_headers || [];
+    const cookieIssues = data.cookie_issues || [];
+
+    const httpsIssues = [];
+    if (!data.https) {
+      httpsIssues.push({
+        key: "https_disabled",
+        label: "HTTPS is NOT enabled",
+        severity: "bad"
+      });
+    } else {
+      httpsIssues.push({
+        key: "https_ok",
+        label: "HTTPS enabled",
+        severity: "ok"
+      });
+    }
+
+    if (data.redirects_to_https === false) {
+      httpsIssues.push({
+        key: "no_https_redirect",
+        label: "HTTP → HTTPS redirect: NO",
+        severity: "bad"
+      });
+    } else if (data.redirects_to_https === true) {
+      httpsIssues.push({
+        key: "https_redirect_ok",
+        label: "HTTP → HTTPS redirect: YES",
+        severity: "ok"
+      });
+    }
+
+    const headerItems = issuesHeaders.length
+      ? issuesHeaders.map(h => ({
+          key: h,
+          label: h,
+          severity: "bad"
+        }))
+      : [{
+          key: "headers_ok",
+          label: "All tracked security headers are present.",
+          severity: "ok"
+        }];
+
+    const cookieItems = cookieIssues.length
+      ? cookieIssues.map(c => ({
+          key: c,
+          label: c,
+          severity: "bad"
+        }))
+      : [{
+          key: "cookies_ok",
+          label: "No obvious cookie issues detected.",
+          severity: "ok"
+        }];
+
+    const connectionBadgeType =
+      httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
+    const headersBadgeType =
+      issuesHeaders.length ? "bad" : "ok";
+    const cookiesBadgeType =
+      cookieIssues.length ? "bad" : "ok";
+
+    resultsEl.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Connection & HTTPS</div>
+          <span class="badge ${connectionBadgeType}">
+            ${connectionBadgeType === "ok" ? "Looks good" : "Issues found"}
+          </span>
+        </div>
+        <div class="card-sub">
+          <div style="font-size:0.82rem;color:${'#6b7280'};">
+            Scanned URL: <code>${escapeHtml(data.url)}</code> · Status code: ${data.status_code}
+          </div>
+        </div>
+        <ul class="issue-list">
+          ${httpsIssues.map(renderIssueItem).join("")}
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Security Headers</div>
+          <span class="badge ${headersBadgeType}">
+            ${headersBadgeType === "ok" ? "All present (tracked)" : "Missing headers"}
+          </span>
+        </div>
+        <ul class="issue-list">
+          ${headerItems.map(renderIssueItem).join("")}
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Cookies</div>
+          <span class="badge ${cookiesBadgeType}">
+            ${cookiesBadgeType === "ok" ? "No issues" : "Issues found"}
+          </span>
+        </div>
+        <ul class="issue-list">
+          ${cookieItems.map(renderIssueItem).join("")}
+        </ul>
+      </div>
+    `;
+
+    resultsEl.style.display = "grid";
+
+    // Attach click handlers for expandable explanations
+    resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
+      el.addEventListener("click", () => {
+        el.classList.toggle("open");
+      });
+    });
+  }
+
+  function renderIssueItem(item) {
+    const isProblem = item.severity === "bad";
+    const isOk = item.severity === "ok";
+    const clickable = isProblem; // only problems are clickable with explanation
+
+    const icon = isProblem ? "⚠️" : "✔️";
+    const baseClasses = ["issue-item", item.severity];
+    if (clickable) baseClasses.push("clickable");
+
+    const description = getDescriptionForKey(item.key);
+
+    return `
+      <li class="${baseClasses.join(" ")}" data-key="${escapeHtml(item.key)}">
+        <div class="issue-main">
+          <div class="issue-label">
+            <span class="issue-icon">${icon}</span>
+            <span>${escapeHtml(item.label)}</span>
+          </div>
+          ${clickable ? `<span class="issue-toggle">Click for details ▾</span>` : ""}
+        </div>
+        ${clickable ? `
+          <div class="issue-details">
+            ${escapeHtml(description)}
+          </div>
+        ` : ""}
+      </li>
+    `;
+  }
+
+  function getDescriptionForKey(key) {
+    if (headerDescriptions[key]) return headerDescriptions[key];
+    if (otherDescriptions[key]) return otherDescriptions[key];
+    // Some cookie messages are exactly the key
+    if (otherDescriptions[key.trim()]) return otherDescriptions[key.trim()];
+    return genericHeaderDescription;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 </script>
-
-
 </body>
 </html>
