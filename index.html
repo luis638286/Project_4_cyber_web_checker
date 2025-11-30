@@ -285,6 +285,38 @@
       font-size: 0.8rem;
       color: var(--text-muted);
     }
+.fix-btn {
+  margin-top: 8px;
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--accent);
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fix-btn:hover {
+  background: var(--accent-soft);
+}
+
+.fix-details {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  background: #f5f5ff;
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: none;
+}
+
+.fix-details.open {
+  display: block;
+}
 
     @media (max-width: 600px) {
       h1 {
@@ -335,6 +367,7 @@
   const resultsEl = document.getElementById("results");
   const btn = document.getElementById("scan-btn");
 
+  // --- Explanations (what the thing is / why it matters) ---
   const headerDescriptions = {
     "Content-Security-Policy":
       "Content-Security-Policy (CSP) controls which scripts, images and other resources the browser is allowed to load. " +
@@ -361,6 +394,7 @@
     "Configuring it (and keeping it enabled) adds an extra defence-in-depth layer.";
 
   const otherDescriptions = {
+    // Problems
     "https_disabled":
       "The site is served over plain HTTP. Traffic can be intercepted or modified by attackers on the network. " +
       "All modern websites should use HTTPS.",
@@ -372,6 +406,8 @@
       "they could steal these cookies (for example, session IDs).",
     "Missing Secure flag":
       "Cookies without the Secure flag may be sent over HTTP, not just HTTPS, making them easier to intercept.",
+
+    // OK states
     "https_ok":
       "This site is served over HTTPS, meaning traffic between the browser and server is encrypted.",
     "https_redirect_ok":
@@ -383,6 +419,53 @@
       "No obvious cookie issues were detected. The tool did not find cookies missing HttpOnly or Secure flags."
   };
 
+  // --- Fix suggestions (how to fix it) ---
+  const fixSuggestions = {
+    // HTTPS stuff
+    "https_disabled":
+      "• Install an SSL/TLS certificate on your server (for example via Let's Encrypt).\n" +
+      "• Configure your web server (Nginx/Apache/… ) to serve the site over HTTPS.\n" +
+      "• Update application URLs to use https:// instead of http://.\n" +
+      "• Test that all pages are reachable over HTTPS without errors.",
+    "no_https_redirect":
+      "• Configure your web server to redirect all http:// requests to https://.\n" +
+      "• Example (Nginx): use a server block on port 80 with `return 301 https://$host$request_uri;`.\n" +
+      "• After enabling, test that visiting http:// automatically sends you to https://.",
+
+    // Cookies
+    "Missing HttpOnly":
+      "• For any sensitive cookies (for example session IDs), add the HttpOnly flag when setting them.\n" +
+      "• In most frameworks, you can configure this in the session/cookie settings.\n" +
+      "• HttpOnly makes the cookie inaccessible to JavaScript, which helps against XSS stealing it.",
+    "Missing Secure flag":
+      "• Add the Secure flag to cookies that should only go over HTTPS.\n" +
+      "• Usually this is a configuration option in your web framework or reverse proxy.\n" +
+      "• Make sure the site actually uses HTTPS before forcing Secure cookies.",
+
+    // Headers – we can reuse the same fixes for missing and present (present = keep it)
+    "Content-Security-Policy":
+      "• Define a CSP header on your server, starting with a simple policy (e.g. only allow scripts from your own domain).\n" +
+      "• Example: `Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none';`.\n" +
+      "• Test carefully so you don't block legitimate resources, then tighten the policy over time.",
+    "Strict-Transport-Security":
+      "• Add the HSTS header on HTTPS responses, e.g. `Strict-Transport-Security: max-age=31536000; includeSubDomains`.\n" +
+      "• Only enable this after you are sure HTTPS works everywhere.\n" +
+      "• Optionally add `preload` and submit the domain to the HSTS preload list.",
+    "X-Content-Type-Options":
+      "• Add the header `X-Content-Type-Options: nosniff` on your responses.\n" +
+      "• This is usually a one-line config in your web server or framework security settings.",
+    "X-Frame-Options":
+      "• If the site should not be framed by other sites, add `X-Frame-Options: DENY` or `SAMEORIGIN`.\n" +
+      "• On newer setups you can also use `frame-ancestors` in Content-Security-Policy instead.",
+    "Referrer-Policy":
+      "• Add a Referrer-Policy header that limits what is sent, e.g. `Referrer-Policy: strict-origin-when-cross-origin`.\n" +
+      "• This keeps full URLs from being leaked to external sites.",
+    "Permissions-Policy":
+      "• Add a Permissions-Policy header specifying which features are allowed, e.g. `Permissions-Policy: geolocation=(), camera=()`.\n" +
+      "• Only enable features that the site actually needs."
+  };
+
+  // --- Form submit / API call ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const url = urlInput.value.trim();
@@ -428,6 +511,7 @@
     }
   });
 
+  // --- Build UI cards from backend data ---
   function renderResults(data) {
     const missingHeaders = data.missing_headers || [];
     const presentHeaders = data.present_headers || [];
@@ -517,13 +601,26 @@
 
     resultsEl.style.display = "grid";
 
+    // click to open issue details
     resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
       el.addEventListener("click", () => {
         el.classList.toggle("open");
       });
     });
+
+    // click on "How can I fix this?" button (don’t collapse row)
+    resultsEl.querySelectorAll(".fix-btn").forEach(btnEl => {
+      btnEl.addEventListener("click", (ev) => {
+        ev.stopPropagation(); // avoid toggling the whole issue item
+        const fixBox = btnEl.nextElementSibling;
+        if (fixBox) {
+          fixBox.classList.toggle("open");
+        }
+      });
+    });
   }
 
+  // --- Render a single issue row ---
   function renderIssueItem(item) {
     const isProblem = item.severity === "bad";
     const icon = isProblem ? "⚠️" : "✔️";
@@ -533,6 +630,7 @@
     if (clickable) baseClasses.push("clickable");
 
     const description = getDescriptionForKey(item.key);
+    const hasFix = !!fixSuggestions[item.key];
 
     return `
       <li class="${baseClasses.join(" ")}" data-key="${escapeHtml(item.key)}">
@@ -541,13 +639,19 @@
             <span class="issue-icon">${icon}</span>
             <span>${escapeHtml(item.label)}</span>
           </div>
-          ${clickable ? `<span class="issue-toggle">Click for details ▾</span>` : ""}
+          <span class="issue-toggle">Click for details ▾</span>
         </div>
-        ${clickable ? `
-          <div class="issue-details">
-            ${escapeHtml(description)}
-          </div>
-        ` : ""}
+        <div class="issue-details">
+          <p>${escapeHtml(description)}</p>
+          ${hasFix ? `
+            <button type="button" class="fix-btn" data-fix-key="${escapeHtml(item.key)}">
+              How can I fix this?
+            </button>
+            <div class="fix-details">
+              ${escapeHtml(fixSuggestions[item.key])}
+            </div>
+          ` : ""}
+        </div>
       </li>
     `;
   }
@@ -555,7 +659,7 @@
   function getDescriptionForKey(key) {
     if (headerDescriptions[key]) return headerDescriptions[key];
     if (otherDescriptions[key]) return otherDescriptions[key];
-    if (otherDescriptions[key.trim()]) return otherDescriptions[key.trim()];
+    if (otherDescriptions[key && key.trim()]) return otherDescriptions[key.trim()];
     return genericHeaderDescription;
   }
 
@@ -567,6 +671,7 @@
       .replace(/"/g, "&quot;");
   }
 </script>
+
 
 </body>
 </html>
