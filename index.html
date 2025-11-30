@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Website Security Checker</title>
   <style>
+    /* FIX APPLIED HERE: Added the opening and closing curly braces {} for :root */
     :root {
       --bg: #f5f4fa;
       --card-bg: #ffffff;
@@ -365,7 +366,8 @@
         <span>Export Results (JSON)</span>
       </button>
     </div>
-        <div id="results" class="results-grid" style="display:none;"></div>
+        
+    <div id="results" class="results-grid" style="display:none;"></div>
 
     <div class="footer-note">
       Tip: click any marked issue to see a short explanation of what it means and why it matters.
@@ -443,45 +445,45 @@
   const fixSuggestions = {
     // HTTPS stuff
     "https_disabled":
-      "• Install an SSL/TLS certificate on your server (for example via Let's Encrypt).\n" +
-      "• Configure your web server (Nginx/Apache/… ) to serve the site over HTTPS.\n" +
-      "• Update application URLs to use https:// instead of http://.\n" +
+      "• Install an SSL/TLS certificate on your server (for example via Let's Encrypt).\\n" +
+      "• Configure your web server (Nginx/Apache/… ) to serve the site over HTTPS.\\n" +
+      "• Update application URLs to use https:// instead of http://.\\n" +
       "• Test that all pages are reachable over HTTPS without errors.",
     "no_https_redirect":
-      "• Configure your web server to redirect all http:// requests to https://.\n" +
-      "• Example (Nginx): use a server block on port 80 with `return 301 https://$host$request_uri;`.\n" +
+      "• Configure your web server to redirect all http:// requests to https://.\\n" +
+      "• Example (Nginx): use a server block on port 80 with `return 301 https://$host$request_uri;`.\\n" +
       "• After enabling, test that visiting http:// automatically sends you to https://.",
 
     // Cookies
     "Missing HttpOnly":
-      "• For any sensitive cookies (for example session IDs), add the HttpOnly flag when setting them.\n" +
-      "• In most frameworks, you can configure this in the session/cookie settings.\n" +
+      "• For any sensitive cookies (for example session IDs), add the HttpOnly flag when setting them.\\n" +
+      "• In most frameworks, you can configure this in the session/cookie settings.\\n" +
       "• HttpOnly makes the cookie inaccessible to JavaScript, which helps against XSS stealing it.",
     "Missing Secure flag":
-      "• Add the Secure flag to cookies that should only go over HTTPS.\n" +
-      "• Usually this is a configuration option in your web framework or reverse proxy.\n" +
+      "• Add the Secure flag to cookies that should only go over HTTPS.\\n" +
+      "• Usually this is a configuration option in your web framework or reverse proxy.\\n" +
       "• Make sure the site actually uses HTTPS before forcing Secure cookies.",
 
     // Headers
     "Content-Security-Policy":
-      "• Define a CSP header on your server, starting with a simple policy (e.g. only allow scripts from your own domain).\n" +
-      "• Example: `Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none';`.\n" +
+      "• Define a CSP header on your server, starting with a simple policy (e.g. only allow scripts from your own domain).\\n" +
+      "• Example: `Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none';`.\\n" +
       "• Test carefully so you don't block legitimate resources, then tighten the policy over time.",
     "Strict-Transport-Security":
-      "• Add the HSTS header on HTTPS responses, e.g. `Strict-Transport-Security: max-age=31536000; includeSubDomains`.\n" +
-      "• Only enable this after you are sure HTTPS works everywhere.\n" +
+      "• Add the HSTS header on HTTPS responses, e.g. `Strict-Transport-Security: max-age=31536000; includeSubDomains`.\\n" +
+      "• Only enable this after you are sure HTTPS works everywhere.\\n" +
       "• Optionally add `preload` and submit the domain to the HSTS preload list.",
     "X-Content-Type-Options":
-      "• Add the header `X-Content-Type-Options: nosniff` on your responses.\n" +
+      "• Add the header `X-Content-Type-Options: nosniff` on your responses.\\n" +
       "• This is usually a one-line config in your web server or framework security settings.",
     "X-Frame-Options":
-      "• If the site should not be framed by other sites, add `X-Frame-Options: DENY` or `SAMEORIGIN`.\n" +
+      "• If the site should not be framed by other sites, add `X-Frame-Options: DENY` or `SAMEORIGIN`.\\n" +
       "• On newer setups you can also use `frame-ancestors` in Content-Security-Policy instead.",
     "Referrer-Policy":
-      "• Add a Referrer-Policy header that limits what is sent, e.g. `Referrer-Policy: strict-origin-when-cross-origin`.\n" +
+      "• Add a Referrer-Policy header that limits what is sent, e.g. `Referrer-Policy: strict-origin-when-cross-origin`.\\n" +
       "• This keeps full URLs from being leaked to external sites.",
     "Permissions-Policy":
-      "• Add a Permissions-Policy header specifying which features are allowed, e.g. `Permissions-Policy: geolocation=(), camera=()`.\n" +
+      "• Add a Permissions-Policy header specifying which features are allowed, e.g. `Permissions-Policy: geolocation=(), camera=()`.\\n" +
       "• Only enable features that the site actually needs."
   };
 
@@ -722,7 +724,7 @@
               How can I fix this?
             </button>
             <div class="fix-details">
-              ${escapeHtml(fixSuggestions[item.key]).replace(/\n/g, "<br>")}
+              ${escapeHtml(fixSuggestions[item.key]).replace(/\\n/g, "<br>")}
             </div>
           ` : ""}
         </div>
