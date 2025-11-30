@@ -54,7 +54,8 @@
       box-shadow:
         0 12px 30px rgba(15, 23, 42, 0.08),
         0 1px 0 rgba(255, 255, 255, 0.8) inset;
-      border: 1px solid rgba(148, 163, 184, 0.35);
+      /* FIX: Using the variable for consistency */
+      border: 1px solid var(--border-soft);
     }
 
     label {
@@ -270,7 +271,7 @@
     }
 
     .issue-item.open .issue-details {
-      max-height: 200px;
+      max-height: 300px; /* Increased slightly to fit fix details */
       opacity: 1;
       transform: translateY(0);
       margin-top: 4px;
@@ -470,8 +471,14 @@
   // --- Form submit / API call ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
-    const url = urlInput.value.trim();
+    let url = urlInput.value.trim();
     if (!url) return;
+
+    // FIX: Check for protocol and add https if missing
+    if (!/^https?:\/\//i.test(url)) {
+      url = "https://" + url;
+      urlInput.value = url; // Visually update input for the user
+    }
 
     statusEl.textContent = "Scanning...";
     statusEl.className = "status loading";
@@ -603,21 +610,22 @@
 
     resultsEl.style.display = "grid";
 
-    // Only the "Click for details ▾" text toggles the row
-    resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
-      toggle.addEventListener("click", (ev) => {
-        ev.stopPropagation();
-        const li = toggle.closest(".issue-item");
-        if (li) {
-          li.classList.toggle("open");
+    // FIX: Add click listener to the entire row, not just the small text
+    resultsEl.querySelectorAll(".issue-item").forEach(item => {
+      item.addEventListener("click", (ev) => {
+        // Don't toggle if the user is clicking the "How to fix" button
+        // or clicking inside the explanation box itself
+        if (ev.target.closest(".fix-btn") || ev.target.closest(".fix-details")) {
+          return;
         }
+        item.classList.toggle("open");
       });
     });
 
-    // Click on "How can I fix this?" button (don’t collapse row)
+    // Handle "How can I fix this?" buttons independently
     resultsEl.querySelectorAll(".fix-btn").forEach(btnEl => {
       btnEl.addEventListener("click", (ev) => {
-        ev.stopPropagation();
+        ev.stopPropagation(); // Prevents bubbling to the row click listener
         const fixBox = btnEl.nextElementSibling;
         if (fixBox) {
           fixBox.classList.toggle("open");
