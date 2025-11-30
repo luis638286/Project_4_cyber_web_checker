@@ -54,7 +54,6 @@
       box-shadow:
         0 12px 30px rgba(15, 23, 42, 0.08),
         0 1px 0 rgba(255, 255, 255, 0.8) inset;
-      /* FIX: Using the variable for consistency */
       border: 1px solid var(--border-soft);
     }
 
@@ -264,14 +263,15 @@
       overflow: hidden;
       opacity: 0;
       transform: translateY(-3px);
-      transition: max-height 0.22s ease, opacity 0.22s ease, transform 0.22s ease;
+      transition: max-height 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
       color: var(--text-muted);
       font-size: 0.86rem;
       line-height: 1.45;
     }
 
+    /* FIX: Increased max-height from 300px to 1000px to prevent text cutoff */
     .issue-item.open .issue-details {
-      max-height: 300px; /* Increased slightly to fit fix details */
+      max-height: 1000px; 
       opacity: 1;
       transform: translateY(0);
       margin-top: 4px;
@@ -474,10 +474,10 @@
     let url = urlInput.value.trim();
     if (!url) return;
 
-    // FIX: Check for protocol and add https if missing
+    // Check for protocol and add https if missing
     if (!/^https?:\/\//i.test(url)) {
       url = "https://" + url;
-      urlInput.value = url; // Visually update input for the user
+      urlInput.value = url;
     }
 
     statusEl.textContent = "Scanning...";
@@ -610,7 +610,7 @@
 
     resultsEl.style.display = "grid";
 
-    // FIX: Add click listener to the entire row, not just the small text
+    // Add click listener to the entire row
     resultsEl.querySelectorAll(".issue-item").forEach(item => {
       item.addEventListener("click", (ev) => {
         // Don't toggle if the user is clicking the "How to fix" button
