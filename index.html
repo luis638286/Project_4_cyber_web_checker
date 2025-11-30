@@ -601,12 +601,16 @@
 
     resultsEl.style.display = "grid";
 
-    // click to open issue details
-    resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
-      el.addEventListener("click", () => {
-        el.classList.toggle("open");
-      });
-    });
+// Only the "Click for details ▾" text toggles the row
+resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
+  toggle.addEventListener("click", (ev) => {
+    ev.stopPropagation(); // don't bubble up
+    const li = toggle.closest(".issue-item");
+    if (li) {
+      li.classList.toggle("open");
+    }
+  });
+});
 
     // click on "How can I fix this?" button (don’t collapse row)
     resultsEl.querySelectorAll(".fix-btn").forEach(btnEl => {
@@ -643,14 +647,15 @@
         </div>
         <div class="issue-details">
           <p>${escapeHtml(description)}</p>
-          ${hasFix ? `
-            <button type="button" class="fix-btn" data-fix-key="${escapeHtml(item.key)}">
-              How can I fix this?
-            </button>
-            <div class="fix-details">
-              ${escapeHtml(fixSuggestions[item.key])}
-            </div>
-          ` : ""}
+${hasFix ? `
+  <button type="button" class="fix-btn" data-fix-key="${escapeHtml(item.key)}">
+    How can I fix this?
+  </button>
+  <div class="fix-details">
+    ${escapeHtml(fixSuggestions[item.key]).replace(/\\n/g, "<br>")}
+  </div>
+` : ""}
+
         </div>
       </li>
     `;
