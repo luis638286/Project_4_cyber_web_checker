@@ -327,7 +327,6 @@
 </div>
 
 <script>
-  // Set backend URL here
   const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";
 
   const form = document.getElementById("scan-form");
@@ -336,7 +335,6 @@
   const resultsEl = document.getElementById("results");
   const btn = document.getElementById("scan-btn");
 
-  // Explanations for each type of issue or status
   const headerDescriptions = {
     "Content-Security-Policy":
       "Content-Security-Policy (CSP) controls which scripts, images and other resources the browser is allowed to load. " +
@@ -358,13 +356,11 @@
       "Using it limits what features the site or embedded content can use."
   };
 
-  // Now neutral so it works for both missing and present
   const genericHeaderDescription =
     "This header is commonly recommended to reduce the site's attack surface. " +
     "Configuring it (and keeping it enabled) adds an extra defence-in-depth layer.";
 
   const otherDescriptions = {
-    // Problems
     "https_disabled":
       "The site is served over plain HTTP. Traffic can be intercepted or modified by attackers on the network. " +
       "All modern websites should use HTTPS.",
@@ -375,10 +371,7 @@
       "Cookies without the HttpOnly flag can be read by JavaScript. If an attacker manages an XSS attack, " +
       "they could steal these cookies (for example, session IDs).",
     "Missing Secure flag":
-      "Cookies without the Secure flag may be sent over HTTP, not just HTTPS, making them easier to " +
-      "intercept on unencrypted connections.",
-
-    // OK states
+      "Cookies without the Secure flag may be sent over HTTP, not just HTTPS, making them easier to intercept.",
     "https_ok":
       "This site is served over HTTPS, meaning traffic between the browser and server is encrypted.",
     "https_redirect_ok":
@@ -424,7 +417,6 @@
       }
 
       renderResults(data);
-
       statusEl.textContent = "Scan completed.";
       statusEl.className = "status ok";
 
@@ -443,47 +435,21 @@
 
     const httpsIssues = [];
     if (!data.https) {
-      httpsIssues.push({
-        key: "https_disabled",
-        label: "HTTPS is NOT enabled",
-        severity: "bad"
-      });
+      httpsIssues.push({ key: "https_disabled", label: "HTTPS is NOT enabled", severity: "bad" });
     } else {
-      httpsIssues.push({
-        key: "https_ok",
-        label: "HTTPS enabled",
-        severity: "ok"
-      });
+      httpsIssues.push({ key: "https_ok", label: "HTTPS enabled", severity: "ok" });
     }
 
     if (data.redirects_to_https === false) {
-      httpsIssues.push({
-        key: "no_https_redirect",
-        label: "HTTP → HTTPS redirect: NO",
-        severity: "bad"
-      });
+      httpsIssues.push({ key: "no_https_redirect", label: "HTTP → HTTPS redirect: NO", severity: "bad" });
     } else if (data.redirects_to_https === true) {
-      httpsIssues.push({
-        key: "https_redirect_ok",
-        label: "HTTP → HTTPS redirect: YES",
-        severity: "ok"
-      });
+      httpsIssues.push({ key: "https_redirect_ok", label: "HTTP → HTTPS redirect: YES", severity: "ok" });
     }
 
-    // Missing headers (problems)
     const headerMissingItems = missingHeaders.length
-      ? missingHeaders.map(h => ({
-          key: h,
-          label: `Missing: ${h}`,
-          severity: "bad"
-        }))
-      : [{
-          key: "headers_ok",
-          label: "No tracked headers are missing.",
-          severity: "ok"
-        }];
+      ? missingHeaders.map(h => ({ key: h, label: `Missing: ${h}`, severity: "bad" }))
+      : [{ key: "headers_ok", label: "No tracked headers are missing.", severity: "ok" }];
 
-    // Present headers (good)
     const headerPresentItems = presentHeaders.map(h => ({
       key: h,
       label: `Present: ${h}`,
@@ -491,23 +457,12 @@
     }));
 
     const cookieItems = cookieIssues.length
-      ? cookieIssues.map(c => ({
-          key: c,
-          label: c,
-          severity: "bad"
-        }))
-      : [{
-          key: "cookies_ok",
-          label: "No obvious cookie issues detected.",
-          severity: "ok"
-        }];
+      ? cookieIssues.map(c => ({ key: c, label: c, severity: "bad" }))
+      : [{ key: "cookies_ok", label: "No obvious cookie issues detected.", severity: "ok" }];
 
-    const connectionBadgeType =
-      httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
-    const headersBadgeType =
-      missingHeaders.length ? "bad" : "ok";
-    const cookiesBadgeType =
-      cookieIssues.length ? "bad" : "ok";
+    const connectionBadgeType = httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
+    const headersBadgeType = missingHeaders.length ? "bad" : "ok";
+    const cookiesBadgeType = cookieIssues.length ? "bad" : "ok";
 
     resultsEl.innerHTML = `
       <div class="card">
@@ -562,7 +517,6 @@
 
     resultsEl.style.display = "grid";
 
-    // Attach click handlers for ALL items
     resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
       el.addEventListener("click", () => {
         el.classList.toggle("open");
@@ -573,9 +527,7 @@
   function renderIssueItem(item) {
     const isProblem = item.severity === "bad";
     const icon = isProblem ? "⚠️" : "✔️";
-
-    // Every item is clickable now
-    const clickable = true;
+    const clickable = true; // all items clickable
 
     const baseClasses = ["issue-item", item.severity];
     if (clickable) baseClasses.push("clickable");
@@ -616,185 +568,5 @@
   }
 </script>
 
-
-  function renderResults(data) {
-    const missingHeaders = data.missing_headers || [];
-    const presentHeaders = data.present_headers || [];
-    const cookieIssues = data.cookie_issues || [];
-
-    const httpsIssues = [];
-    if (!data.https) {
-      httpsIssues.push({
-        key: "https_disabled",
-        label: "HTTPS is NOT enabled",
-        severity: "bad"
-      });
-    } else {
-      httpsIssues.push({
-        key: "https_ok",
-        label: "HTTPS enabled",
-        severity: "ok"
-      });
-    }
-
-    if (data.redirects_to_https === false) {
-      httpsIssues.push({
-        key: "no_https_redirect",
-        label: "HTTP → HTTPS redirect: NO",
-        severity: "bad"
-      });
-    } else if (data.redirects_to_https === true) {
-      httpsIssues.push({
-        key: "https_redirect_ok",
-        label: "HTTP → HTTPS redirect: YES",
-        severity: "ok"
-      });
-    }
-
-    // Missing headers (problems)
-    const headerMissingItems = missingHeaders.length
-      ? missingHeaders.map(h => ({
-          key: h,
-          label: `Missing: ${h}`,
-          severity: "bad"
-        }))
-      : [{
-          key: "headers_ok",
-          label: "No tracked headers are missing.",
-          severity: "ok"
-        }];
-
-    // Present headers (good)
-    const headerPresentItems = presentHeaders.map(h => ({
-      key: h,
-      label: `Present: ${h}`,
-      severity: "ok"
-    }));
-
-    const cookieItems = cookieIssues.length
-      ? cookieIssues.map(c => ({
-          key: c,
-          label: c,
-          severity: "bad"
-        }))
-      : [{
-          key: "cookies_ok",
-          label: "No obvious cookie issues detected.",
-          severity: "ok"
-        }];
-
-    const connectionBadgeType =
-      httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
-    const headersBadgeType =
-      missingHeaders.length ? "bad" : "ok";
-    const cookiesBadgeType =
-      cookieIssues.length ? "bad" : "ok";
-
-    resultsEl.innerHTML = `
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Connection & HTTPS</div>
-          <span class="badge ${connectionBadgeType}">
-            ${connectionBadgeType === "ok" ? "Looks good" : "Issues found"}
-          </span>
-        </div>
-        <div class="card-sub">
-          <div style="font-size:0.82rem;color:${'#6b7280'};">
-            Scanned URL: <code>${escapeHtml(data.url)}</code> · Status code: ${data.status_code}
-          </div>
-        </div>
-        <ul class="issue-list">
-          ${httpsIssues.map(renderIssueItem).join("")}
-        </ul>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Security Headers</div>
-          <span class="badge ${headersBadgeType}">
-            ${headersBadgeType === "ok" ? "All present (tracked)" : "Missing headers"}
-          </span>
-        </div>
-        <ul class="issue-list">
-          ${headerMissingItems.map(renderIssueItem).join("")}
-        </ul>
-        ${headerPresentItems.length ? `
-        <hr style="border:none;border-top:1px solid ${'#e5e7eb'};margin:8px 0 4px;">
-        <div style="font-size:0.82rem;color:${'#6b7280'};margin-bottom:4px;">
-          Headers that are already present:
-        </div>
-        <ul class="issue-list">
-          ${headerPresentItems.map(renderIssueItem).join("")}
-        </ul>` : ""}
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Cookies</div>
-          <span class="badge ${cookiesBadgeType}">
-            ${cookiesBadgeType === "ok" ? "No issues" : "Issues found"}
-          </span>
-        </div>
-        <ul class="issue-list">
-          ${cookieItems.map(renderIssueItem).join("")}
-        </ul>
-      </div>
-    `;
-
-    resultsEl.style.display = "grid";
-
-    // Attach click handlers for expandable explanations
-    resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
-      el.addEventListener("click", () => {
-        el.classList.toggle("open");
-      });
-    });
-  }
-
-  function renderIssueItem(item) {
-    const isProblem = item.severity === "bad";
-    const isOk = item.severity === "ok";
-    const clickable = isProblem; // only problems are clickable with explanation
-
-    const icon = isProblem ? "⚠️" : "✔️";
-    const baseClasses = ["issue-item", item.severity];
-    if (clickable) baseClasses.push("clickable");
-
-    const description = getDescriptionForKey(item.key);
-
-    return `
-      <li class="${baseClasses.join(" ")}" data-key="${escapeHtml(item.key)}">
-        <div class="issue-main">
-          <div class="issue-label">
-            <span class="issue-icon">${icon}</span>
-            <span>${escapeHtml(item.label)}</span>
-          </div>
-          ${clickable ? `<span class="issue-toggle">Click for details ▾</span>` : ""}
-        </div>
-        ${clickable ? `
-          <div class="issue-details">
-            ${escapeHtml(description)}
-          </div>
-        ` : ""}
-      </li>
-    `;
-  }
-
-  function getDescriptionForKey(key) {
-    if (headerDescriptions[key]) return headerDescriptions[key];
-    if (otherDescriptions[key]) return otherDescriptions[key];
-    // Some cookie messages are exactly the key
-    if (otherDescriptions[key.trim()]) return otherDescriptions[key.trim()];
-    return genericHeaderDescription;
-  }
-
-  function escapeHtml(str) {
-    return String(str)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;");
-  }
-</script>
 </body>
 </html>
