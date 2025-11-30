@@ -285,38 +285,40 @@
       font-size: 0.8rem;
       color: var(--text-muted);
     }
-.fix-btn {
-  margin-top: 8px;
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  border-radius: 999px;
-  border: 1px solid var(--accent);
-  background: transparent;
-  color: var(--accent);
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
 
-.fix-btn:hover {
-  background: var(--accent-soft);
-}
+    /* Fix button + details box */
+    .fix-btn {
+      margin-top: 8px;
+      padding: 6px 10px;
+      font-size: 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--accent);
+      background: transparent;
+      color: var(--accent);
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
 
-.fix-details {
-  margin-top: 6px;
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  background: #f5f5ff;
-  border-radius: 8px;
-  padding: 6px 8px;
-  display: none;
-}
+    .fix-btn:hover {
+      background: var(--accent-soft);
+    }
 
-.fix-details.open {
-  display: block;
-}
+    .fix-details {
+      margin-top: 6px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      background: #f5f5ff;
+      border-radius: 8px;
+      padding: 6px 8px;
+      display: none;
+    }
+
+    .fix-details.open {
+      display: block;
+    }
 
     @media (max-width: 600px) {
       h1 {
@@ -442,7 +444,7 @@
       "• Usually this is a configuration option in your web framework or reverse proxy.\n" +
       "• Make sure the site actually uses HTTPS before forcing Secure cookies.",
 
-    // Headers – we can reuse the same fixes for missing and present (present = keep it)
+    // Headers
     "Content-Security-Policy":
       "• Define a CSP header on your server, starting with a simple policy (e.g. only allow scripts from your own domain).\n" +
       "• Example: `Content-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none';`.\n" +
@@ -601,21 +603,21 @@
 
     resultsEl.style.display = "grid";
 
-// Only the "Click for details ▾" text toggles the row
-resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
-  toggle.addEventListener("click", (ev) => {
-    ev.stopPropagation(); // don't bubble up
-    const li = toggle.closest(".issue-item");
-    if (li) {
-      li.classList.toggle("open");
-    }
-  });
-});
+    // Only the "Click for details ▾" text toggles the row
+    resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
+      toggle.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const li = toggle.closest(".issue-item");
+        if (li) {
+          li.classList.toggle("open");
+        }
+      });
+    });
 
-    // click on "How can I fix this?" button (don’t collapse row)
+    // Click on "How can I fix this?" button (don’t collapse row)
     resultsEl.querySelectorAll(".fix-btn").forEach(btnEl => {
       btnEl.addEventListener("click", (ev) => {
-        ev.stopPropagation(); // avoid toggling the whole issue item
+        ev.stopPropagation();
         const fixBox = btnEl.nextElementSibling;
         if (fixBox) {
           fixBox.classList.toggle("open");
@@ -628,10 +630,7 @@ resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
   function renderIssueItem(item) {
     const isProblem = item.severity === "bad";
     const icon = isProblem ? "⚠️" : "✔️";
-    const clickable = true; // all items clickable
-
-    const baseClasses = ["issue-item", item.severity];
-    if (clickable) baseClasses.push("clickable");
+    const baseClasses = ["issue-item", item.severity, "clickable"];
 
     const description = getDescriptionForKey(item.key);
     const hasFix = !!fixSuggestions[item.key];
@@ -647,24 +646,26 @@ resultsEl.querySelectorAll(".issue-toggle").forEach(toggle => {
         </div>
         <div class="issue-details">
           <p>${escapeHtml(description)}</p>
-${hasFix ? `
-  <button type="button" class="fix-btn" data-fix-key="${escapeHtml(item.key)}">
-    How can I fix this?
-  </button>
-  <div class="fix-details">
-    ${escapeHtml(fixSuggestions[item.key]).replace(/\\n/g, "<br>")}
-  </div>
-` : ""}
-
+          ${hasFix ? `
+            <button type="button" class="fix-btn" data-fix-key="${escapeHtml(item.key)}">
+              How can I fix this?
+            </button>
+            <div class="fix-details">
+              ${escapeHtml(fixSuggestions[item.key]).replace(/\n/g, "<br>")}
+            </div>
+          ` : ""}
         </div>
       </li>
     `;
   }
 
   function getDescriptionForKey(key) {
-    if (headerDescriptions[key]) return headerDescriptions[key];
-    if (otherDescriptions[key]) return otherDescriptions[key];
-    if (otherDescriptions[key && key.trim()]) return otherDescriptions[key.trim()];
+    if (!key) return genericHeaderDescription;
+    const trimmed = key.trim();
+
+    if (headerDescriptions[trimmed]) return headerDescriptions[trimmed];
+    if (otherDescriptions[trimmed]) return otherDescriptions[trimmed];
+
     return genericHeaderDescription;
   }
 
@@ -676,7 +677,5 @@ ${hasFix ? `
       .replace(/"/g, "&quot;");
   }
 </script>
-
-
 </body>
 </html>
