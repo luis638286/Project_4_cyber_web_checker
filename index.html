@@ -327,7 +327,7 @@
 </div>
 
 <script>
-  // 🔧 Set your backend URL here
+  // Set backend URL here
   const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";
 
   const form = document.getElementById("scan-form");
@@ -424,7 +424,8 @@
   });
 
   function renderResults(data) {
-    const issuesHeaders = data.missing_headers || [];
+    const missingHeaders = data.missing_headers || [];
+    const presentHeaders = data.present_headers || [];
     const cookieIssues = data.cookie_issues || [];
 
     const httpsIssues = [];
@@ -456,17 +457,25 @@
       });
     }
 
-    const headerItems = issuesHeaders.length
-      ? issuesHeaders.map(h => ({
+    // Missing headers (problems)
+    const headerMissingItems = missingHeaders.length
+      ? missingHeaders.map(h => ({
           key: h,
-          label: h,
+          label: `Missing: ${h}`,
           severity: "bad"
         }))
       : [{
           key: "headers_ok",
-          label: "All tracked security headers are present.",
+          label: "No tracked headers are missing.",
           severity: "ok"
         }];
+
+    // Present headers (good)
+    const headerPresentItems = presentHeaders.map(h => ({
+      key: h,
+      label: `Present: ${h}`,
+      severity: "ok"
+    }));
 
     const cookieItems = cookieIssues.length
       ? cookieIssues.map(c => ({
@@ -483,7 +492,7 @@
     const connectionBadgeType =
       httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
     const headersBadgeType =
-      issuesHeaders.length ? "bad" : "ok";
+      missingHeaders.length ? "bad" : "ok";
     const cookiesBadgeType =
       cookieIssues.length ? "bad" : "ok";
 
@@ -513,8 +522,16 @@
           </span>
         </div>
         <ul class="issue-list">
-          ${headerItems.map(renderIssueItem).join("")}
+          ${headerMissingItems.map(renderIssueItem).join("")}
         </ul>
+        ${headerPresentItems.length ? `
+        <hr style="border:none;border-top:1px solid ${'#e5e7eb'};margin:8px 0 4px;">
+        <div style="font-size:0.82rem;color:${'#6b7280'};margin-bottom:4px;">
+          Headers that are already present:
+        </div>
+        <ul class="issue-list">
+          ${headerPresentItems.map(renderIssueItem).join("")}
+        </ul>` : ""}
       </div>
 
       <div class="card">

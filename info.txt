@@ -1,3 +1,18 @@
+url: https://luis638286.github.io/Project_4_cyber_web_checker/
+
+request data from backend:
+
+fetch("https://project-4-fontys-backend.onrender.com/scan", {
+  method: "POST",
+  headers: {"Content-Type": "application/json"},
+  body: JSON.stringify({url: "https://google.com"})
+})
+.then(x => x.text())
+.then(console.log)
+.catch(console.error);
+
+
+
 3. Missing security headers
 
 Each missing header is basically a missing defense layer, which increases the attack surface.
