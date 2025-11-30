@@ -336,36 +336,38 @@
   const resultsEl = document.getElementById("results");
   const btn = document.getElementById("scan-btn");
 
-  // Explanations for each type of issue
+  // Explanations for each type of issue or status
   const headerDescriptions = {
     "Content-Security-Policy":
-      "CSP controls which scripts, images and other resources the browser is allowed to load. " +
-      "Without it, the site is more vulnerable to Cross-Site Scripting (XSS) and malicious script injections.",
+      "Content-Security-Policy (CSP) controls which scripts, images and other resources the browser is allowed to load. " +
+      "Having a well-configured CSP reduces the risk of Cross-Site Scripting (XSS) and malicious script injections.",
     "Strict-Transport-Security":
-      "HSTS tells browsers to always use HTTPS for this site. Missing HSTS allows downgrade attacks " +
-      "where users might be forced onto an insecure HTTP version.",
+      "Strict-Transport-Security (HSTS) tells browsers to always use HTTPS for this site. " +
+      "With HSTS enabled, downgrade attacks to HTTP become much harder.",
     "X-Content-Type-Options":
-      "Prevents the browser from guessing file types. Without it, some files could be interpreted as " +
-      "executable script, opening the door to MIME-type confusion attacks.",
+      "X-Content-Type-Options prevents the browser from guessing file types. " +
+      "This helps prevent some files from being interpreted as executable script.",
     "X-Frame-Options":
-      "Controls whether the site can be loaded inside an iframe. Without it, attackers can perform " +
-      "clickjacking by overlaying invisible frames on top of trusted UI.",
+      "X-Frame-Options controls whether the site can be loaded inside an iframe. " +
+      "Using it protects against clickjacking attacks.",
     "Referrer-Policy":
-      "Limits what information is sent in the Referer header. Missing this header can leak sensitive URLs " +
-      "and parameters to other sites when users follow links.",
+      "Referrer-Policy limits what information is sent in the Referer header. " +
+      "A good policy prevents leaking sensitive URLs and query parameters to other sites.",
     "Permissions-Policy":
-      "Restricts powerful browser features like camera, microphone and geolocation. Without it, these " +
-      "features are less controlled and more risky if other bugs exist."
+      "Permissions-Policy controls access to powerful browser features like camera, microphone and geolocation. " +
+      "Using it limits what features the site or embedded content can use."
   };
 
+  // Now neutral so it works for both missing and present
   const genericHeaderDescription =
     "This header is commonly recommended to reduce the site's attack surface. " +
-    "Not having it configured means one less defence-in-depth layer.";
+    "Configuring it (and keeping it enabled) adds an extra defence-in-depth layer.";
 
   const otherDescriptions = {
+    // Problems
     "https_disabled":
-      "The site is served over plain HTTP. Traffic can be intercepted or modified by attackers on the " +
-      "network. All modern websites should use HTTPS.",
+      "The site is served over plain HTTP. Traffic can be intercepted or modified by attackers on the network. " +
+      "All modern websites should use HTTPS.",
     "no_https_redirect":
       "HTTP traffic is not forced to HTTPS. If a user types or follows an http:// link, the connection " +
       "can be intercepted before it ever reaches HTTPS.",
@@ -374,7 +376,18 @@
       "they could steal these cookies (for example, session IDs).",
     "Missing Secure flag":
       "Cookies without the Secure flag may be sent over HTTP, not just HTTPS, making them easier to " +
-      "intercept on unencrypted connections."
+      "intercept on unencrypted connections.",
+
+    // OK states
+    "https_ok":
+      "This site is served over HTTPS, meaning traffic between the browser and server is encrypted.",
+    "https_redirect_ok":
+      "The HTTP version of this site correctly redirects to HTTPS. Users who type http:// are automatically upgraded.",
+    "headers_ok":
+      "All of the security headers that this tool checks for are present. There may still be more advanced settings, " +
+      "but the basic recommended headers are in place.",
+    "cookies_ok":
+      "No obvious cookie issues were detected. The tool did not find cookies missing HttpOnly or Secure flags."
   };
 
   form.addEventListener("submit", async (e) => {
@@ -422,6 +435,187 @@
       btn.disabled = false;
     }
   });
+
+  function renderResults(data) {
+    const missingHeaders = data.missing_headers || [];
+    const presentHeaders = data.present_headers || [];
+    const cookieIssues = data.cookie_issues || [];
+
+    const httpsIssues = [];
+    if (!data.https) {
+      httpsIssues.push({
+        key: "https_disabled",
+        label: "HTTPS is NOT enabled",
+        severity: "bad"
+      });
+    } else {
+      httpsIssues.push({
+        key: "https_ok",
+        label: "HTTPS enabled",
+        severity: "ok"
+      });
+    }
+
+    if (data.redirects_to_https === false) {
+      httpsIssues.push({
+        key: "no_https_redirect",
+        label: "HTTP → HTTPS redirect: NO",
+        severity: "bad"
+      });
+    } else if (data.redirects_to_https === true) {
+      httpsIssues.push({
+        key: "https_redirect_ok",
+        label: "HTTP → HTTPS redirect: YES",
+        severity: "ok"
+      });
+    }
+
+    // Missing headers (problems)
+    const headerMissingItems = missingHeaders.length
+      ? missingHeaders.map(h => ({
+          key: h,
+          label: `Missing: ${h}`,
+          severity: "bad"
+        }))
+      : [{
+          key: "headers_ok",
+          label: "No tracked headers are missing.",
+          severity: "ok"
+        }];
+
+    // Present headers (good)
+    const headerPresentItems = presentHeaders.map(h => ({
+      key: h,
+      label: `Present: ${h}`,
+      severity: "ok"
+    }));
+
+    const cookieItems = cookieIssues.length
+      ? cookieIssues.map(c => ({
+          key: c,
+          label: c,
+          severity: "bad"
+        }))
+      : [{
+          key: "cookies_ok",
+          label: "No obvious cookie issues detected.",
+          severity: "ok"
+        }];
+
+    const connectionBadgeType =
+      httpsIssues.some(i => i.severity === "bad") ? "bad" : "ok";
+    const headersBadgeType =
+      missingHeaders.length ? "bad" : "ok";
+    const cookiesBadgeType =
+      cookieIssues.length ? "bad" : "ok";
+
+    resultsEl.innerHTML = `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Connection & HTTPS</div>
+          <span class="badge ${connectionBadgeType}">
+            ${connectionBadgeType === "ok" ? "Looks good" : "Issues found"}
+          </span>
+        </div>
+        <div class="card-sub">
+          <div style="font-size:0.82rem;color:${'#6b7280'};">
+            Scanned URL: <code>${escapeHtml(data.url)}</code> · Status code: ${data.status_code}
+          </div>
+        </div>
+        <ul class="issue-list">
+          ${httpsIssues.map(renderIssueItem).join("")}
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Security Headers</div>
+          <span class="badge ${headersBadgeType}">
+            ${headersBadgeType === "ok" ? "All present (tracked)" : "Missing headers"}
+          </span>
+        </div>
+        <ul class="issue-list">
+          ${headerMissingItems.map(renderIssueItem).join("")}
+        </ul>
+        ${headerPresentItems.length ? `
+        <hr style="border:none;border-top:1px solid ${'#e5e7eb'};margin:8px 0 4px;">
+        <div style="font-size:0.82rem;color:${'#6b7280'};margin-bottom:4px;">
+          Headers that are already present:
+        </div>
+        <ul class="issue-list">
+          ${headerPresentItems.map(renderIssueItem).join("")}
+        </ul>` : ""}
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Cookies</div>
+          <span class="badge ${cookiesBadgeType}">
+            ${cookiesBadgeType === "ok" ? "No issues" : "Issues found"}
+          </span>
+        </div>
+        <ul class="issue-list">
+          ${cookieItems.map(renderIssueItem).join("")}
+        </ul>
+      </div>
+    `;
+
+    resultsEl.style.display = "grid";
+
+    // Attach click handlers for ALL items
+    resultsEl.querySelectorAll(".issue-item.clickable").forEach(el => {
+      el.addEventListener("click", () => {
+        el.classList.toggle("open");
+      });
+    });
+  }
+
+  function renderIssueItem(item) {
+    const isProblem = item.severity === "bad";
+    const icon = isProblem ? "⚠️" : "✔️";
+
+    // Every item is clickable now
+    const clickable = true;
+
+    const baseClasses = ["issue-item", item.severity];
+    if (clickable) baseClasses.push("clickable");
+
+    const description = getDescriptionForKey(item.key);
+
+    return `
+      <li class="${baseClasses.join(" ")}" data-key="${escapeHtml(item.key)}">
+        <div class="issue-main">
+          <div class="issue-label">
+            <span class="issue-icon">${icon}</span>
+            <span>${escapeHtml(item.label)}</span>
+          </div>
+          ${clickable ? `<span class="issue-toggle">Click for details ▾</span>` : ""}
+        </div>
+        ${clickable ? `
+          <div class="issue-details">
+            ${escapeHtml(description)}
+          </div>
+        ` : ""}
+      </li>
+    `;
+  }
+
+  function getDescriptionForKey(key) {
+    if (headerDescriptions[key]) return headerDescriptions[key];
+    if (otherDescriptions[key]) return otherDescriptions[key];
+    if (otherDescriptions[key.trim()]) return otherDescriptions[key.trim()];
+    return genericHeaderDescription;
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+</script>
+
 
   function renderResults(data) {
     const missingHeaders = data.missing_headers || [];
