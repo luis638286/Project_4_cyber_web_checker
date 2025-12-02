@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Website Vulnerability Scanner</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="page">
+    <h1>Website Vulnerability Scanner</h1>
+    <p class="tagline">
+      Enter a website URL and this tool will run a lightweight vulnerability screen on its configuration:
+      HTTPS usage, redirects, security headers, and cookie flags.
+    </p>
+
+    <div class="shell-card">
+      <form id="scan-form">
+        <label for="url-input">Website URL</label>
+        <div class="input-row">
+          <input id="url-input" type="text" placeholder="https://example.com" required>
+          <button type="submit" id="scan-btn">
+            <span>Scan</span>
+          </button>
+        </div>
+      </form>
+
+      <div id="status" class="status"></div>
+
+      <div id="export-row" class="export-button-row" style="display:none;">
+        <button type="button" id="export-btn">Export Report (TXT)</button>
+      </div>
+
+      <div id="results" class="results-grid" style="display:none;"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
