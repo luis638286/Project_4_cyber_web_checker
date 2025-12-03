@@ -1,4 +1,4 @@
 endpoints:  /health ;  /scan
 
 Base URL:
-https://project-4-fontys-backend.onrender.com/
+https://p3-website-vulnerability-checker.onrender.com
