@@ -1,4 +1,4 @@
-const BACKEND_URL = "https://project-4-fontys-backend.onrender.com/scan";
+const BACKEND_URL = "https://p3-website-vulnerability-checker.onrender.com/scan";
 
 const form = document.getElementById("scan-form");
 const urlInput = document.getElementById("url-input");
