@@ -1,7 +1,7 @@
 const BACKEND_URL1 = "https://p3-website-vulnerability-checker.onrender.com/scan";
 const BACKEND_URL2 = "http://127.0.0.1:5000/scan";
 
-const BACKEND_URL = BACKEND_URL2
+const BACKEND_URL = BACKEND_URL1;
 
 const form = document.getElementById("scan-form");
 const urlInput = document.getElementById("url-input");
